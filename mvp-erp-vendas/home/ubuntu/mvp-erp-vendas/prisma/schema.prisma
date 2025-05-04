@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Cliente {
+  id                        Int       @id @default(autoincrement())
+  nome                      String
+  cnpj                      String    @unique
+  email                     String    @unique
+  telefone                  String?
+  setor                     String?
+  regiao                    String?   // Could be enhanced with lat/lon later if needed
+  latitude                  Float?    // For map visualization
+  longitude                 Float?    // For map visualization
+  dataUltimaCompra          DateTime?
+  fatorVendaUltimaCompra    Float?
+  condicaoPagamentoUltimaCompra String?
+  ultimaInteracao           DateTime?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  vendas                    Venda[]
+  interacoes                Interacao[]
+}
+
+model Produto {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  codigo    String   @unique
+  preco     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  vendas    Venda[]
+}
+
+model Venda {
+  id                 Int       @id @default(autoincrement())
+  clienteId          Int
+  produtoId          Int
+  preco              Float
+  dataVenda          DateTime  @default(now())
+  fatorVenda         Float
+  condicaoPagamento  String
+  comissaoCalculada  Float     // Calculated based on fatorVenda
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  cliente            Cliente   @relation(fields: [clienteId], references: [id])
+  produto            Produto   @relation(fields: [produtoId], references: [id])
+
+  @@index([clienteId])
+  @@index([produtoId])
+}
+
+model Interacao {
+  id          Int      @id @default(autoincrement())
+  clienteId   Int
+  data        DateTime @default(now())
+  descricao   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  cliente     Cliente  @relation(fields: [clienteId], references: [id])
+
+  @@index([clienteId])
+}
+
+model Meta {
+  id                  Int      @id @default(autoincrement())
+  vendedorId          String   // Assuming a simple ID or name for now, as only one seller
+  valorVenda          Float
+  fatorMedioDesejado  Float
+  mes                 Int      // 1-12
+  ano                 Int
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([vendedorId, mes, ano]) // Ensure unique goal per seller per month/year
+}
+
